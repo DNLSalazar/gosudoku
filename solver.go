@@ -16,10 +16,10 @@ func Solve(s *sudoku.Sudoku) {
 				}
 
 				for value := 1; value < 10; value++ {
-					result := s.ValidateNewCell(sudoku.Coor{X: i, Y: j}, value)
-					if result {
-						break
-					}
+					// result := s.ValidateNewCell(sudoku.Coor{X: i, Y: j}, value)
+					// if result {
+					// 	break
+					// }
 				}
 			}
 		}

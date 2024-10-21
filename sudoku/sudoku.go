@@ -44,12 +44,61 @@ func (s *Sudoku) GetCell(c Coor) Cell {
 	return (*s).board[c.X][c.Y]
 }
 
+func (s *Sudoku) GetBoard() [][]Cell {
+	return s.board
+}
+
 func (s *Sudoku) printStateOfBoard() {
 	marshallResult, err := json.Marshal(s.board)
 	if err != nil {
 		panic("Error parsing sudoku")
 	}
 	fmt.Println(string(marshallResult))
+}
+
+func (s *Sudoku) ValidateCells() {
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			s.board[i][j].HasErr = false
+		}
+	}
+	for i := range 9 {
+		rowCells := make([]*Cell, 0)
+		colCells := make([]*Cell, 0)
+		for j := range 9 {
+			rc := &(s.board[i][j])
+			if rc.Value != 0 {
+				rowCells = append(rowCells, rc)
+			}
+
+			cc := &(s.board[j][i])
+			if cc.Value != 0 {
+				colCells = append(colCells, cc)
+			}
+		}
+		validateSliceOfCells(&rowCells)
+		validateSliceOfCells(&colCells)
+	}
+
+	s.validateCuadrantsCells()
+}
+
+func (s *Sudoku) validateCuadrantsCells() {
+	for _, v := range s.cCoors {
+		initX := v.X - 1
+		initY := v.Y - 1
+
+		cuadrant := make([]*Cell, 0)
+		for i := initX; i <= v.X+1; i++ {
+			for j := initY; j <= v.Y+1; j++ {
+				cell := &(s.board[i][j])
+				if cell.Value != 0 {
+					cuadrant = append(cuadrant, cell)
+				}
+			}
+		}
+		validateSliceOfCells(&cuadrant)
+	}
 }
 
 func (s *Sudoku) IsValidBoard() bool {
@@ -168,6 +217,7 @@ func (s *Sudoku) ValidateCuadrantGame(center Coor) bool {
 	return validateIntMap(&cuadrant)
 }
 
+// NOTE: Unused
 func (s *Sudoku) cellHasError(cell *Cell) bool {
 	col := make(map[int]int)
 	row := make(map[int]int)
@@ -191,7 +241,7 @@ func (s *Sudoku) cellHasError(cell *Cell) bool {
 	return false
 }
 
-func (s *Sudoku) ValidateNewCell(c Coor, value int) bool {
+func (s *Sudoku) ValidateNewCell(c Coor, value int) [][]Cell {
 	// TODO: Improve validation...
 	// Some ideas
 	// - Validate that the failing reason for a cell is the evaluating value,
@@ -201,13 +251,13 @@ func (s *Sudoku) ValidateNewCell(c Coor, value int) bool {
 
 	cell := &(s.board[c.X][c.Y])
 	if (*cell).Static {
-		return false
+		return s.board
 	}
 
 	cell.Value = value
 
-	hasErr := s.cellHasError(cell)
-	return hasErr
+	s.ValidateCells()
+	return s.board
 }
 
 func (s *Sudoku) GetCenterOfCuadrantForCoor(c Coor) Coor {

@@ -10,8 +10,7 @@ func testBoardWithFiles() {
 	boards := readBoardsFromFile()
 	prevSudoku, currSudoku := CreateSudokuFromCells(boards)
 	prevSudoku.PrintBoard()
-	result := prevSudoku.ValidateNewCell(sudoku.Coor{X: 5, Y: 0}, 9)
-	fmt.Println(result)
+	prevSudoku.ValidateNewCell(sudoku.Coor{X: 5, Y: 0}, 9)
 	currSudoku.PrintBoard()
 }
 

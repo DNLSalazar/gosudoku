@@ -44,6 +44,27 @@ func addToIntMap(m *map[int]int, value int) {
 	}
 }
 
+func validateSliceOfCells(cells *[]*Cell) {
+	m := make(map[int][]*Cell)
+	for i := 0; i < len(*cells); i++ {
+		cell := (*cells)[i]
+		if _, ok := m[cell.Value]; ok {
+			m[cell.Value] = append(m[cell.Value], cell)
+		} else {
+			m[cell.Value] = []*Cell{cell}
+		}
+	}
+
+	for k := range m {
+		l := len(m[k])
+		if l > 1 {
+			for i := 0; i < l; i++ {
+				m[k][i].HasErr = true
+			}
+		}
+	}
+}
+
 func validateIntMap(m *map[int]int) bool {
 	for _, v := range *m {
 		if v > 1 {

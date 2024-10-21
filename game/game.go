@@ -41,6 +41,9 @@ type SudokuGame struct {
 	helpPage     bool
 	inputEnable  bool
 	content      string
+	board        [][]sudoku.Cell
+	quiting      bool
+	fastMode     bool
 }
 
 func NewSudokuGame(s *sudoku.Sudoku) *tea.Program {
@@ -51,6 +54,7 @@ func NewSudokuGame(s *sudoku.Sudoku) *tea.Program {
 	input.CharLimit = 3
 	input.Width = 5
 	input.Prompt = ""
+	board := s.GetBoard()
 
 	game := SudokuGame{
 		s:            s,
@@ -58,6 +62,7 @@ func NewSudokuGame(s *sudoku.Sudoku) *tea.Program {
 		highlightCol: 0,
 		helpPage:     false,
 		input:        input,
+		board:        board,
 	}
 
 	game.buildView()
@@ -68,33 +73,146 @@ func (s SudokuGame) Init() tea.Cmd {
 	return nil
 }
 
-func (s SudokuGame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s *SudokuGame) updateCellByInput(value string) {
+	if len(value) != 3 {
+		return
+	}
+
+	valueToUpdate := string(value[2])
+	s.UpdateCell(valueToUpdate)
+	s.input.SetValue("")
+}
+
+func (s *SudokuGame) HandleUpdateInputMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyEnter:
+		case tea.KeyCtrlH:
+			s.helpPage = !s.helpPage
+			s.buildView()
 			return s, nil
 		case tea.KeyCtrlC:
 			return s, tea.Quit
+		case tea.KeyUp:
+			return s, tea.Quit
+		case tea.KeyEnter:
+			value := s.input.Value()
+			s.updateCellByInput(value)
+			s.buildView()
+			return s, nil
 		}
 
 		switch str := msg.String(); str {
 		case "q", "Q":
+			s.quiting = true
 			s.buildView()
+			return s, nil
+		case "u", "U":
+			if s.highlightRow != -1 && s.highlightCol != -1 {
+				s.input.SetValue(fmt.Sprintf("%d%d", s.highlightRow+1, s.highlightCol+1))
+			}
+			s.buildView()
+			return s, nil
+		case "m", "M":
+			s.inputEnable = !s.inputEnable
+			s.buildView()
+			return s, nil
+		case "f", "F":
+			s.fastMode = !s.fastMode
+			s.buildView()
+			return s, nil
+		default:
+			_, err := strconv.Atoi(str)
+			if err != nil && str != "backspace" {
+				s.buildView()
+				return s, nil
+			}
+
+			cmd := s.updateInput(msg)
+			s.buildView()
+			return s, cmd
+		}
+	}
+
+	return s, nil
+}
+
+func (s *SudokuGame) updateInput(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	s.input, cmd = s.input.Update(msg)
+	s.input.Focus()
+	value := s.input.Value()
+	l := len(value)
+	if l == 1 {
+		result := strToInt(string(value[0]))
+		if result != -1 {
+			s.highlightRow = result - 1
+		}
+	}
+
+	if l == 2 {
+		result := strToInt(string(value[1]))
+		if result != -1 {
+			s.highlightCol = result - 1
+		}
+	}
+
+	if s.fastMode && l == 3 {
+		s.UpdateCell(string(value[2]))
+		s.input.SetValue("")
+	}
+	return cmd
+}
+
+func (s *SudokuGame) HandleUpdateMoveMode(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyCtrlH:
+			s.helpPage = !s.helpPage
+			s.buildView()
+			return s, nil
+		case tea.KeyCtrlC:
 			return s, tea.Quit
-		case "j":
+		case tea.KeyDown:
 			s.MoveCursor(dirDown)
 			s.buildView()
 			return s, nil
-		case "k":
+		case tea.KeyUp:
 			s.MoveCursor(dirUp)
 			s.buildView()
 			return s, nil
-		case "h":
+		case tea.KeyLeft:
 			s.MoveCursor(dirLeft)
 			s.buildView()
 			return s, nil
-		case "l":
+		case tea.KeyRight:
+			s.MoveCursor(dirRight)
+			s.buildView()
+			return s, nil
+		}
+
+		switch str := msg.String(); str {
+		case "q", "Q":
+			s.quiting = true
+			s.buildView()
+			return s, nil
+		case "y", "Y":
+			s.buildView()
+			return s, tea.Quit
+		case "j", "s", "J", "S":
+			s.MoveCursor(dirDown)
+			s.buildView()
+			return s, nil
+		case "k", "w", "K", "W":
+			s.MoveCursor(dirUp)
+			s.buildView()
+			return s, nil
+		case "h", "a", "H", "A":
+			s.MoveCursor(dirLeft)
+			s.buildView()
+			return s, nil
+		case "l", "d", "L", "D":
 			s.MoveCursor(dirRight)
 			s.buildView()
 			return s, nil
@@ -106,6 +224,29 @@ func (s SudokuGame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s.UpdateCell(str)
 			s.buildView()
 			return s, nil
+		}
+	}
+	return s, nil
+}
+
+func (s SudokuGame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if s.quiting {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "y", "Y":
+				return s, tea.Quit
+			case "n", "N":
+				s.quiting = false
+				s.buildView()
+				return s, nil
+			}
+		}
+	} else {
+		if s.inputEnable {
+			return s.HandleUpdateInputMode(msg)
+		} else {
+			return s.HandleUpdateMoveMode(msg)
 		}
 	}
 	return s, nil
@@ -128,7 +269,7 @@ func (s *SudokuGame) UpdateCell(str string) {
 		X: s.highlightRow,
 		Y: s.highlightCol,
 	}
-	s.s.ValidateNewCell(coor, num)
+	s.board = s.s.ValidateNewCell(coor, num)
 }
 
 func (s *SudokuGame) MoveCursor(dir CursorDirection) {
@@ -156,14 +297,43 @@ func addToCursor(cursorAxis *int, value int) {
 	*cursorAxis += value
 }
 
+func (s *SudokuGame) printHelpPage() {
+	str := "Press Ctrl+H to toggle Help\r\n"
+	str += "Press m to change between input mode or movement mode\r\n\r\n"
+
+	str += "------------ Input Mode ------------\r\n\r\n"
+	str += "  - Use F to toggle fast mode\r\n"
+	str += "  - Use the input to make your move and change the cell\r\n"
+	str += "  - First value is the row, second one is column and third is the value the cell will hold\r\n"
+	str += "  - Press enter to make the move\r\n"
+	str += "  - If fast mode is enabled, you don't need to press enter to make the mov\r\n"
+	str += "  - Press U after you made your move to fill the input with the previous column and row\r\n\r\n"
+
+	str += "------------ Movement Mode ------------\r\n\r\n"
+	str += "  - Use Up/K/W, Right/L/D, Left/H/A, Down/J/S to move the cursor\r\n"
+	str += "  - Press any number between 0-9 to update a cell\r\n"
+	s.content = str
+}
+
 func (s *SudokuGame) buildView() {
+	if s.helpPage {
+		s.printHelpPage()
+		return
+	}
+	if s.quiting {
+		s.content = "Are you sure you want to quit? Y(es)/N(o)"
+		return
+	}
+
 	validBoard := s.s.IsValidBoard()
 	if validBoard {
 		s.content = "YOU WON!!!!!!"
 		return
 	}
-	str := "     "
-	lastRow := "\r\n\r\n     "
+	str := "Press Ctrl+H for help\r\n\r\n"
+
+	str += "     "
+	lastRow := "\r\n     "
 	for i := 0; i < 9; i++ {
 		strToAdd := ""
 		if i == s.highlightCol {
@@ -196,18 +366,22 @@ func (s *SudokuGame) buildView() {
 		colorNumRow := (int(math.Floor(float64(i)/3))%3)%2 == 0
 		for j := 0; j < 9; j++ {
 			colorNumCol := (int(math.Floor(float64(j)/3))%3)%2 == 0
+			cell := s.board[i][j]
 
 			var color lipgloss.Style
-			if colorNumRow == colorNumCol {
-				color = inStTextBlue
+			if cell.HasErr {
+				color = inStTextRed
 			} else {
-				color = inStTextGreen
+				if colorNumRow == colorNumCol {
+					color = inStTextBlue
+				} else {
+					color = inStTextGreen
+				}
 			}
 
 			if j == 0 {
 				strInner += color.Render("|")
 			}
-			cell := s.s.GetCell(sudoku.Coor{X: i, Y: j})
 			var value string
 			if cell.Value == 0 {
 				value = "   "
@@ -219,7 +393,7 @@ func (s *SudokuGame) buildView() {
 			}
 			strInner += color.Render(fmt.Sprintf("%s|", value))
 		}
-		str += fmt.Sprintf("%s   %s\r\n", strInner, lastCol)
+		str += fmt.Sprintf("%s%s\r\n", strInner, lastCol)
 		str += fmt.Sprintf("     ------------------------------------- \r\n")
 	}
 	str += lastRow
@@ -241,6 +415,11 @@ func (s *SudokuGame) printError() {
 func (s *SudokuGame) addInput() {
 	if s.inputEnable {
 		s.content += inputStyle.Width(5).Render("Move") + s.input.View()
+		if s.fastMode {
+			s.content += "Fast Mode: ON"
+		} else {
+			s.content += "Fast Mode: OFF"
+		}
 	}
 }
 
