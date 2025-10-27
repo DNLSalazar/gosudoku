@@ -57,8 +57,8 @@ func (s *Sudoku) printStateOfBoard() {
 }
 
 func (s *Sudoku) ValidateCells() {
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
+	for i := range 9 {
+		for j := range 9 {
 			s.board[i][j].HasErr = false
 		}
 	}
@@ -173,10 +173,10 @@ func (s *Sudoku) emptyBoard() {
 func (s *Sudoku) PrintBoard() {
 	fmt.Printf("     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | \r\n\r\n")
 	fmt.Printf("     ------------------------------------- \r\n")
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		colorNumRow := (int(math.Floor(float64(i)/3))%3)%2 == 0
 		str := fmt.Sprintf("  %d  ", i+1)
-		for j := 0; j < 9; j++ {
+		for j := range 9 {
 			colorNumCol := (int(math.Floor(float64(j)/3))%3)%2 == 0
 
 			var color *color.Color
@@ -224,7 +224,7 @@ func (s *Sudoku) cellHasError(cell *Cell) bool {
 	value := cell.Value
 	c := cell.Coor
 
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		addToIntMap(&col, s.board[c.X][i].Value)
 		addToIntMap(&row, s.board[i][c.Y].Value)
 	}

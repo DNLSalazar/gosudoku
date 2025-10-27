@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sudoku/game"
+	"sudoku/server"
 	"sudoku/sudoku"
 )
 
@@ -24,18 +25,12 @@ func runGame() {
 }
 
 func main() {
-	// s := sudoku.CreateNewSudoku(17)
-	// nums := make([][]int, 9)
-	// for i := 0; i < 9; i++ {
-	// 	nums[i] = make([]int, 9)
-	// 	for j := 0; j < 9; j++ {
-	// 		nums[i][j] = s.Board[i][j].Value
-	// 	}
-	// }
-	// fmt.Println(s.IsValidBoard())
-	// fmt.Println(nums)
-	// s.PrintBoard()
+	s := sudoku.CreateNewSudoku(20)
+	s.PrintBoard()
+	// solving := NewSolvingSudoku(s)
+	// solving.Solve()
+	// solving.sudoku.PrintBoard()
 	// Solve(&s)
-	// s.PrintBoard()
-	runGame()
+	// runGame()
+	server.Server()
 }

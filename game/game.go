@@ -265,11 +265,13 @@ func (s *SudokuGame) UpdateCell(str string) {
 	if num == -1 {
 		return
 	}
-	coor := sudoku.Coor{
-		X: s.highlightRow,
-		Y: s.highlightCol,
+	if s.highlightRow != -1 && s.highlightCol != -1 {
+		coor := sudoku.Coor{
+			X: s.highlightRow,
+			Y: s.highlightCol,
+		}
+		s.board = s.s.ValidateNewCell(coor, num)
 	}
-	s.board = s.s.ValidateNewCell(coor, num)
 }
 
 func (s *SudokuGame) MoveCursor(dir CursorDirection) {
@@ -325,16 +327,16 @@ func (s *SudokuGame) buildView() {
 		return
 	}
 
+	str := ""
 	validBoard := s.s.IsValidBoard()
 	if validBoard {
-		s.content = "YOU WON!!!!!!"
-		return
+		str += "YOU WON!!!!!!"
 	}
-	str := "Press Ctrl+H for help\r\n\r\n"
+	str += "Press Ctrl+H for help\r\n\r\n"
 
 	str += "     "
 	lastRow := "\r\n     "
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		strToAdd := ""
 		if i == s.highlightCol {
 			strToAdd += "|" + inStBgYello.Render(fmt.Sprintf(" %d ", i+1))
@@ -345,11 +347,11 @@ func (s *SudokuGame) buildView() {
 		lastRow += strToAdd
 	}
 
-	str += fmt.Sprintf("\r\n\r\n")
-	lastRow += fmt.Sprintf("\r\n\r\n")
-	str += fmt.Sprintf("     ------------------------------------- \r\n")
+	str += "\r\n\r\n"
+	lastRow += "\r\n\r\n"
+	str += "     ------------------------------------- \r\n"
 
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		strInner := ""
 		lastCol := ""
 		strToAdd := ""
@@ -364,7 +366,7 @@ func (s *SudokuGame) buildView() {
 		}
 
 		colorNumRow := (int(math.Floor(float64(i)/3))%3)%2 == 0
-		for j := 0; j < 9; j++ {
+		for j := range 9 {
 			colorNumCol := (int(math.Floor(float64(j)/3))%3)%2 == 0
 			cell := s.board[i][j]
 
@@ -394,7 +396,7 @@ func (s *SudokuGame) buildView() {
 			strInner += color.Render(fmt.Sprintf("%s|", value))
 		}
 		str += fmt.Sprintf("%s%s\r\n", strInner, lastCol)
-		str += fmt.Sprintf("     ------------------------------------- \r\n")
+		str += "     ------------------------------------- \r\n"
 	}
 	str += lastRow
 	s.content = str
