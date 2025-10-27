@@ -35,7 +35,29 @@ func CreateNewSudoku(staticCells int) Sudoku {
 }
 
 func CreateSudokuFromCells(board [][]Cell) Sudoku {
-	return Sudoku{board: board, cCoors: centralCoors}
+	newBoard := make([][]Cell, len(board))
+
+	for i := range board {
+		row := board[i]
+		newRow := make([]Cell, len(row))
+
+		for k := range row {
+			cell := board[i][k]
+			newCell := Cell{
+				Value:  cell.Value,
+				HasErr: cell.HasErr,
+				Static: cell.Static,
+				Coor: Coor{
+					X: cell.Coor.X,
+					Y: cell.Coor.Y,
+				},
+			}
+
+			newRow[k] = newCell
+		}
+		newBoard[i] = newRow
+	}
+	return Sudoku{board: newBoard, cCoors: centralCoors}
 }
 
 func addToIntMap(m *map[int]int, value int) {
