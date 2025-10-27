@@ -25,10 +25,14 @@ type Cell struct {
 	HasErr bool `json:"hasError"`
 }
 
-func NC(n int) Cell {
+func NC(n int, x, y int) Cell {
 	return Cell{
 		Value:  n,
 		Static: true,
+		Coor: Coor{
+			x,
+			y,
+		},
 	}
 }
 
@@ -40,8 +44,8 @@ type Sudoku struct {
 	errorCells  []*Cell
 }
 
-func (s *Sudoku) GetCell(c Coor) Cell {
-	return (*s).board[c.X][c.Y]
+func (s *Sudoku) GetCell(c Coor) *Cell {
+	return &s.board[c.X][c.Y]
 }
 
 func (s *Sudoku) GetBoard() [][]Cell {
@@ -58,14 +62,10 @@ func (s *Sudoku) printStateOfBoard() {
 
 func (s *Sudoku) ValidateCells() {
 	for i := range 9 {
-		for j := range 9 {
-			s.board[i][j].HasErr = false
-		}
-	}
-	for i := range 9 {
 		rowCells := make([]*Cell, 0)
 		colCells := make([]*Cell, 0)
 		for j := range 9 {
+			s.board[i][j].HasErr = false
 			rc := &(s.board[i][j])
 			if rc.Value != 0 {
 				rowCells = append(rowCells, rc)
@@ -242,13 +242,6 @@ func (s *Sudoku) cellHasError(cell *Cell) bool {
 }
 
 func (s *Sudoku) ValidateNewCell(c Coor, value int) [][]Cell {
-	// TODO: Improve validation...
-	// Some ideas
-	// - Validate that the failing reason for a cell is the evaluating value,
-	//   instead of some already existing value.
-	// - Could try to implement some safe like `boardIsFull` for knowing when to replace cells
-	//   and when to leave it with the current value to avoid a dead end while solving.
-
 	cell := &(s.board[c.X][c.Y])
 	if (*cell).Static {
 		return s.board
@@ -258,6 +251,11 @@ func (s *Sudoku) ValidateNewCell(c Coor, value int) [][]Cell {
 
 	s.ValidateCells()
 	return s.board
+}
+
+func (s *Sudoku) TestNewCell(c Coor, value int) bool {
+	cell := s.GetCell(c)
+	return s.cellHasError(cell)
 }
 
 func (s *Sudoku) GetCenterOfCuadrantForCoor(c Coor) Coor {
