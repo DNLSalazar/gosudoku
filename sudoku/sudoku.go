@@ -25,6 +25,12 @@ type Cell struct {
 	HasErr bool `json:"hasError"`
 }
 
+type DumbCell struct {
+	Coor     Coor `json:"coor"`
+	HasErr   bool `json:"hasError"`
+	HasValue bool `json:"hasValue"`
+}
+
 func NC(n int, x, y int) Cell {
 	return Cell{
 		Value:  n,
@@ -266,4 +272,25 @@ func (s *Sudoku) GetCenterOfCuadrantForCoor(c Coor) Coor {
 		}
 	}
 	panic("NO CENTER FOUND")
+}
+
+func (s *Sudoku) GetDumbBoard() [][]DumbCell {
+	newBoard := make([][]DumbCell, len(s.board))
+
+	for i, row := range s.board {
+		newRow := make([]DumbCell, len(row))
+
+		for k, cell := range row {
+			dc := DumbCell{
+				Coor:     cell.Coor,
+				HasErr:   cell.HasErr,
+				HasValue: cell.Value != 0,
+			}
+			newRow[k] = dc
+		}
+
+		newBoard[i] = newRow
+	}
+
+	return newBoard
 }

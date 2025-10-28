@@ -11,67 +11,95 @@ import (
 	"github.com/olahol/melody"
 )
 
-type Message struct {
+type MessageFromPlayer struct {
 	Coors    sudoku.Coor `json:"coors"`
 	Value    int         `json:"value"`
 	PlayerId string      `json:"playerId"`
 }
 
 type PlayerSession struct {
-	PlayerId string
-	Game     sudoku.Sudoku
+	PlayerId   string
+	PlayerName string
+	Game       sudoku.Sudoku
+	ws         *melody.Session
 }
 
 func (p *PlayerSession) ToPlayerSessionResponse() PlayerGameStartResponse {
 	return PlayerGameStartResponse{
-		PlayerId: p.PlayerId,
-		Board:    p.Game.GetBoard(),
+		PlayerId:   p.PlayerId,
+		Board:      p.Game.GetBoard(),
+		PlayerName: p.PlayerName,
+	}
+}
+
+func (p *PlayerSession) ToOpponenetInformation() OpponentPlayerInformation {
+	return OpponentPlayerInformation{
+		PlayerName: p.PlayerName,
+		Board:      p.Game.GetDumbBoard(),
 	}
 }
 
 type PlayerGameStartResponse struct {
-	PlayerId string          `json:"playerId"`
-	Board    [][]sudoku.Cell `json:"board"`
+	PlayerId   string          `json:"playerId"`
+	PlayerName string          `json:"playerName"`
+	Board      [][]sudoku.Cell `json:"board"`
+}
+
+type OpponentPlayerInformation struct {
+	PlayerName string              `json:"playerName"`
+	Board      [][]sudoku.DumbCell `json:"board"`
 }
 
 type GameSession struct {
 	InitialBoard [][]sudoku.Cell
-	Player1      *PlayerSession
-	Player2      *PlayerSession
+	Players      []*PlayerSession
+	MaxPlayers   int
 	Winner       string
 	onGoing      bool
 }
 
+type MessageResponse[T [][]sudoku.Cell | []OpponentPlayerInformation | PlayerGameStartResponse] struct {
+	Type string `json:"type"`
+	Data T      `json:"data"`
+}
+
 func (gs *GameSession) SlotAvailable() bool {
-	return gs.Player1 == nil || gs.Player2 == nil
+	return len(gs.Players) < gs.MaxPlayers
 }
 
 func (gs *GameSession) GetPlayerSession(id string) *PlayerSession {
-	if gs.Player1 != nil && gs.Player1.PlayerId == id {
-		return gs.Player1
-	}
-	if gs.Player2 != nil && gs.Player2.PlayerId == id {
-		return gs.Player2
+	for _, v := range gs.Players {
+		if id == v.PlayerId {
+			return v
+		}
 	}
 	return nil
 }
 
-func (gs *GameSession) AddPLayerSession(ps *PlayerSession) error {
+func (gs *GameSession) AddPlayerSession(ps *PlayerSession) error {
 	if !gs.SlotAvailable() {
 		return errors.New("No slots for player session")
 	}
 
-	if gs.Player1 == nil {
-		gs.Player1 = ps
-		return nil
+	for _, v := range gs.Players {
+		if ps.PlayerId == v.PlayerId {
+			return errors.New("Player already in game")
+		}
 	}
 
-	if gs.Player2 == nil {
-		gs.Player2 = ps
-		return nil
-	}
+	ps.PlayerName = fmt.Sprintf("Player%d", len(gs.Players)+1)
+	gs.Players = append(gs.Players, ps)
 
 	return nil
+}
+
+func (gs *GameSession) GetPlayersProgressInformation() []OpponentPlayerInformation {
+	psInfo := make([]OpponentPlayerInformation, len(gs.Players))
+	for i, v := range gs.Players {
+		psInfo[i] = v.ToOpponenetInformation()
+	}
+
+	return psInfo
 }
 
 func Server() {
@@ -79,6 +107,8 @@ func Server() {
 	game := sudoku.CreateNewSudoku(17)
 	gs := GameSession{
 		InitialBoard: game.GetBoard(),
+		MaxPlayers:   4,
+		Players:      []*PlayerSession{},
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -99,14 +129,19 @@ func Server() {
 			Game:     pSudoku,
 		}
 
-		err := gs.AddPLayerSession(&pSession)
+		err := gs.AddPlayerSession(&pSession)
 		if err != nil {
 			fmt.Println("Error adding player session")
 			w.Write([]byte("Cannot add player session to game"))
 			return
 		}
 
-		data, err := json.Marshal(pSession.ToPlayerSessionResponse())
+		resData := MessageResponse[PlayerGameStartResponse]{
+			Type: "session",
+			Data: pSession.ToPlayerSessionResponse(),
+		}
+
+		data, err := json.Marshal(resData)
 		if err != nil {
 			fmt.Println("Error getting sudoku")
 			w.Write([]byte("Error getting sudoku"))
@@ -121,7 +156,7 @@ func Server() {
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		var data Message
+		var data MessageFromPlayer
 
 		err := json.Unmarshal(msg, &data)
 		if err != nil {
@@ -139,14 +174,29 @@ func Server() {
 
 		newBoard := ps.Game.ValidateNewCell(data.Coors, data.Value)
 		ps.Game.PrintBoard()
-		newBoardData, err := json.Marshal(newBoard)
+		resData := MessageResponse[[][]sudoku.Cell]{
+			Type: "board",
+			Data: newBoard,
+		}
+		newBoardData, err := json.Marshal(resData)
 		if err != nil {
-			fmt.Println("Error getting sudoku")
+			fmt.Println("Error getting sudoku for player", ps.PlayerId, err)
 			return
 		}
 
 		s.Write(newBoardData)
-		// m.Broadcast(newBoardData)
+
+		psInfo := gs.GetPlayersProgressInformation()
+		bcData := MessageResponse[[]OpponentPlayerInformation]{
+			Type: "players",
+			Data: psInfo,
+		}
+		playersInfo, err := json.Marshal(bcData)
+		if err != nil {
+			fmt.Println("Error broadcasting data to players", err)
+			return
+		}
+		m.Broadcast(playersInfo)
 	})
 
 	http.ListenAndServe(":5000", nil)

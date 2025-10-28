@@ -15,12 +15,27 @@
       max-width: 1rem;
       width: 1rem;
     }
+    #players {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+    #players > div {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+      gap: 3px;
+    }
+    #players span {
+      width: 8px;
+      height: 8px;
+    }
   </style>
 
   <body>
     <center>
       <h3>Sudoku</h3>
       <div id="board"></div>
+      <div id="players"></div>
     </center>
 
     <script>
@@ -28,17 +43,20 @@
       const ws = new WebSocket(url);
       const name = "Guest" + Math.floor(Math.random() * 1000);
 
-      const chat = document.getElementById("board");
+      const mainBoard = document.getElementById("board");
       const text = document.getElementById("text");
+      const playersBoards = document.getElementById("players");
 
       const ERROR_COLOR = "#FF0000";
+      const CORRECT_COLOR = "#00FF00";
+      const GRAY_COLOR = "#C7C7C7";
       let playerId = "";
 
       function buildBoard(board) {
         for (let i = 0; i < board.length; i++) {
           const row = board[i];
           for (let j = 0; j < row.length; j++) {
-            const cel = board[i][j];
+            const cel = row[j];
             if (!cel) continue;
             const id = `${cel.coor.x}-${cel.coor.y}`;
             const elementOnBoard = document.getElementById(id);
@@ -52,8 +70,8 @@
               element.style.borderColor = cel.hasError ? ERROR_COLOR : "";
               element.onkeyup = onKey;
 
-              chat.appendChild(element);
-              continue
+              mainBoard.appendChild(element);
+              continue;
             }
 
             elementOnBoard.value = cel.value || "";
@@ -62,12 +80,49 @@
         }
       }
 
+      function buildPlayersBoards(playersData) {
+        for (let i = 0; i < playersData.length; i++) {
+          const playerData = playersData[i];
+          const playerName = playerData.playerName;
+          const board = playerData.board;
+          const boardId = `board_player_${playerData.playerName}`;
+          let boardElement = document.getElementById(boardId);
+
+          if (!boardElement) {
+            const element = document.createElement("div");
+            element.id = boardId;
+            element.className = "playerMinBoard";
+            boardElement = element;
+            playersBoards.appendChild(boardElement);
+          }
+
+          console.log(board, playerData);
+          for (let j = 0; j < board.length; j++) {
+            const row = board[j];
+            for (let k = 0; k < row.length; k++) {
+              const cell = row[k];
+              if (!cell) continue;
+
+              const id = `dumb_${boardId}.${cell.coor.x}-${cell.coor.y}`;
+              let elementOnBoard = document.getElementById(id);
+              if (!elementOnBoard) {
+                const element = document.createElement("span");
+                element.id = id;
+                elementOnBoard = element;
+                boardElement.appendChild(elementOnBoard);
+              }
+              elementOnBoard.style.backgroundColor = cell.hasError ? ERROR_COLOR : cell.hasValue ? CORRECT_COLOR : GRAY_COLOR;
+            }
+          }
+        }
+      }
+
       fetch(`${window.location.protocol}//${window.location.host}/board`).then(async res => {
         console.log("Getting data from server...");
         const data = await res.json();
         console.log(data);
-        playerId = data.playerId
-        buildBoard(data.board);
+        playerId = data.data.playerId;
+        buildBoard(data.data.board);
       }).catch(error => {
         console.error("Error getting board", error);
       });
@@ -80,7 +135,22 @@
       ws.onmessage = function (msg) {
         const data = JSON.parse(msg.data);
         console.log(data);
-        buildBoard(data);
+
+        const type = data.type;
+        switch(type) {
+          case "board": {
+            buildBoard(data.data);
+            break;
+          }
+          case "players": {
+            buildPlayersBoards(data.data);
+            break;
+          }
+          default: {
+            console.error("Error getting message type", data);
+            break;
+          }
+        }
       };
 
       function fromStringToCoors(val) {
