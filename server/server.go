@@ -21,7 +21,6 @@ type PlayerSession struct {
 	PlayerId   string
 	PlayerName string
 	Game       sudoku.Sudoku
-	ws         *melody.Session
 }
 
 func (p *PlayerSession) ToPlayerSessionResponse() PlayerGameStartResponse {

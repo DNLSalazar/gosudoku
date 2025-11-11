@@ -58,7 +58,7 @@ func (s *Sudoku) GetBoard() [][]Cell {
 	return s.board
 }
 
-func (s *Sudoku) printStateOfBoard() {
+func (s *Sudoku) PrintStateOfBoard() {
 	marshallResult, err := json.Marshal(s.board)
 	if err != nil {
 		panic("Error parsing sudoku")
@@ -68,10 +68,14 @@ func (s *Sudoku) printStateOfBoard() {
 
 func (s *Sudoku) ValidateCells() {
 	for i := range 9 {
+		for k := range 9 {
+			s.board[i][k].HasErr = false
+		}
+	}
+	for i := range 9 {
 		rowCells := make([]*Cell, 0)
 		colCells := make([]*Cell, 0)
 		for j := range 9 {
-			s.board[i][j].HasErr = false
 			rc := &(s.board[i][j])
 			if rc.Value != 0 {
 				rowCells = append(rowCells, rc)
