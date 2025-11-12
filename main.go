@@ -3,17 +3,11 @@ package main
 import (
 	"fmt"
 	"sudoku/game"
+	"sudoku/menu"
 	"sudoku/server"
 	"sudoku/sudoku"
+	"time"
 )
-
-func testBoardWithFiles() {
-	boards := readBoardsFromFile()
-	prevSudoku, currSudoku := CreateSudokuFromCells(boards)
-	prevSudoku.PrintBoard()
-	prevSudoku.ValidateNewCell(sudoku.Coor{X: 5, Y: 0}, 9)
-	currSudoku.PrintBoard()
-}
 
 func runGame() {
 	fmt.Print("\033[H\033[2J")
@@ -24,13 +18,29 @@ func runGame() {
 	}
 }
 
+func startMenuApp() int {
+	fmt.Print("\033[H\033[2J")
+
+	var selection int
+	a := menu.NewMenuApp(&selection)
+	if _, err := a.Run(); err != nil {
+		fmt.Println("Error running menu", err)
+		panic("Error running menu")
+	}
+
+	return selection
+}
+
 func main() {
-	s := sudoku.CreateNewSudoku(20)
-	s.PrintBoard()
-	// solving := NewSolvingSudoku(s)
-	// solving.Solve()
-	// solving.sudoku.PrintBoard()
-	// Solve(&s)
-	// runGame()
-	server.Server()
+	result := startMenuApp()
+	switch result {
+	case menu.ServeGame:
+		fmt.Println("Starting server game")
+		time.Sleep(time.Second * 5)
+		server.Server()
+	case menu.PlayOnTerminal:
+		fmt.Println("Playing on terminal...")
+		time.Sleep(time.Second * 5)
+		runGame()
+	}
 }

@@ -198,5 +198,9 @@ func Server() {
 		m.Broadcast(playersInfo)
 	})
 
-	http.ListenAndServe(":5000", nil)
+	fmt.Println("Server running on port 5000")
+	if err := http.ListenAndServe(":5000", nil); err != nil {
+		fmt.Println("Error running server", err)
+		panic("Cannot run server")
+	}
 }
