@@ -16,11 +16,21 @@
       width: 1rem;
     }
     #players {
+      width: 100%;
       display: flex;
       flex-direction: row;
       gap: 20px;
+      justify-content: center;
+      align-items: center;
     }
-    #players > div {
+    #players > .div {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: auto;
+      width: auto;
+    }
+    #players .playerMinBoard {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
       gap: 3px;
@@ -33,7 +43,7 @@
 
   <body>
     <center>
-      <h3>Sudoku</h3>
+      <h3 id="title">Sudoku</h3>
       <div id="board"></div>
       <div id="players"></div>
     </center>
@@ -41,16 +51,17 @@
     <script>
       const url = "ws://" + window.location.host + "/ws";
       const ws = new WebSocket(url);
-      const name = "Guest" + Math.floor(Math.random() * 1000);
 
       const mainBoard = document.getElementById("board");
-      const text = document.getElementById("text");
+      const gameTitle = document.getElementById("title");
       const playersBoards = document.getElementById("players");
 
       const ERROR_COLOR = "#FF0000";
       const CORRECT_COLOR = "#00FF00";
       const GRAY_COLOR = "#C7C7C7";
-      let playerId = "";
+      let currentPlayerId = "";
+      let currentPlayerName = "";
+      let gameEnded = false;
 
       function buildBoard(board) {
         for (let i = 0; i < board.length; i++) {
@@ -89,14 +100,22 @@
           let boardElement = document.getElementById(boardId);
 
           if (!boardElement) {
+            const container = document.createElement("div");
+            const title = document.createElement("p");
+            title.innerHTML = playerData.playerName;
+            if (playerData.playerName === currentPlayerName) {
+              title.style.border = "1px solid blue";
+            }
+            container.appendChild(title);
+
             const element = document.createElement("div");
             element.id = boardId;
             element.className = "playerMinBoard";
             boardElement = element;
-            playersBoards.appendChild(boardElement);
+            container.appendChild(boardElement);
+            playersBoards.appendChild(container);
           }
 
-          console.log(board, playerData);
           for (let j = 0; j < board.length; j++) {
             const row = board[j];
             for (let k = 0; k < row.length; k++) {
@@ -117,39 +136,61 @@
         }
       }
 
+      function disableBoard() {
+        const inputs = board.childNodes;
+        for (let i = 0; i < inputs.length; i++) {
+          const element = inputs[i];
+          if (element.tagName === "INPUT") {
+            element.disabled = true
+          }
+        }
+      }
+
+      function handleEndGame(info) {
+        gameTitle.innerHTML = `${info.winnerName} has won!!`;
+        buildPlayersBoards(info.playerData);
+        disableBoard()
+      }
+
       fetch(`${window.location.protocol}//${window.location.host}/board`).then(async res => {
         console.log("Getting data from server...");
         const data = await res.json();
-        console.log(data);
-        playerId = data.data.playerId;
+        currentPlayerId = data.data.playerId;
+        currentPlayerName = data.data.playerName;
         buildBoard(data.data.board);
       }).catch(error => {
         console.error("Error getting board", error);
       });
 
-      const now = function () {
-        const iso = new Date().toISOString();
-        return iso.split("T")[1].split(".")[0];
-      };
-
       ws.onmessage = function (msg) {
-        const data = JSON.parse(msg.data);
-        console.log(data);
+        try {
+          const data = JSON.parse(msg.data);
 
-        const type = data.type;
-        switch(type) {
-          case "board": {
-            buildBoard(data.data);
-            break;
+          const type = data.type;
+          switch(type) {
+            case "board": {
+              buildBoard(data.data);
+              break;
+            }
+            case "players": {
+              buildPlayersBoards(data.data);
+              break;
+            }
+            case "GameEnded": {
+              handleEndGame(data.data);
+              break;
+            }
+            case "Error": {
+              console.error("Error from server", data.data);
+              break;
+            }
+            default: {
+              console.error("Error getting message type", data);
+              break;
+            }
           }
-          case "players": {
-            buildPlayersBoards(data.data);
-            break;
-          }
-          default: {
-            console.error("Error getting message type", data);
-            break;
-          }
+        } catch(error) {
+          console.error("Error handling message", msg, error);
         }
       };
 
@@ -167,7 +208,9 @@
       }
 
       function onKey(e) {
-        console.log(e.target.id, e.keyCode, e.target.value, Number(e.target.value));
+        if (gameEnded) {
+          e.target.value = ""
+        }
         if (!Number(e.target.value)) {
           e.target.value = "";
           return
@@ -177,7 +220,7 @@
           const data = {
             coors,
             value: Number(e.target.value),
-            playerId: playerId
+            playerId: currentPlayerId
           };
           ws.send(JSON.stringify(data));
         }

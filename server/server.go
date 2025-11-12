@@ -11,6 +11,8 @@ import (
 	"github.com/olahol/melody"
 )
 
+const PORT = "5000"
+
 type MessageFromPlayer struct {
 	Coors    sudoku.Coor `json:"coors"`
 	Value    int         `json:"value"`
@@ -57,7 +59,16 @@ type GameSession struct {
 	onGoing      bool
 }
 
-type MessageResponse[T [][]sudoku.Cell | []OpponentPlayerInformation | PlayerGameStartResponse] struct {
+type GameEndedInformation struct {
+	WinnerName  string                      `json:"winnerName"`
+	PlayersData []OpponentPlayerInformation `json:"playerData"`
+}
+
+type GameErrorInformation struct {
+	Message string `json:"message"`
+}
+
+type MessageResponse[T [][]sudoku.Cell | []OpponentPlayerInformation | PlayerGameStartResponse | GameEndedInformation | GameErrorInformation] struct {
 	Type string `json:"type"`
 	Data T      `json:"data"`
 }
@@ -103,11 +114,13 @@ func (gs *GameSession) GetPlayersProgressInformation() []OpponentPlayerInformati
 
 func Server() {
 	m := melody.New()
-	game := sudoku.CreateNewSudoku(17)
+	// game := sudoku.CreateNewSudoku(17)
+	game := sudoku.CreateNewSudoku(76)
 	gs := GameSession{
 		InitialBoard: game.GetBoard(),
 		MaxPlayers:   4,
 		Players:      []*PlayerSession{},
+		onGoing:      true,
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -155,6 +168,25 @@ func Server() {
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		if !gs.onGoing {
+			errorInfo := GameErrorInformation{
+				Message: "The game has ended!",
+			}
+
+			responseData, err := json.Marshal(MessageResponse[GameErrorInformation]{
+				Type: "Error",
+				Data: errorInfo,
+			})
+
+			if err != nil {
+				s.Write([]byte("Error sending response"))
+				return
+			}
+
+			s.Write(responseData)
+			return
+		}
+
 		var data MessageFromPlayer
 
 		err := json.Unmarshal(msg, &data)
@@ -168,8 +200,6 @@ func Server() {
 			s.Write([]byte("Cannot find player session"))
 			return
 		}
-
-		fmt.Println("GAME SESSION FOUND", ps.PlayerId)
 
 		newBoard := ps.Game.ValidateNewCell(data.Coors, data.Value)
 		ps.Game.PrintBoard()
@@ -196,11 +226,34 @@ func Server() {
 			return
 		}
 		m.Broadcast(playersInfo)
+
+		if ps.Game.IsValidBoard() {
+			gs.onGoing = false
+			gs.Winner = ps.PlayerName
+
+			gInfo := GameEndedInformation{
+				WinnerName:  gs.Winner,
+				PlayersData: psInfo,
+			}
+
+			responseData, err := json.Marshal(MessageResponse[GameEndedInformation]{
+				Type: "GameEnded",
+				Data: gInfo,
+			})
+
+			if err != nil {
+				fmt.Println("Error on parsing gameInfo", err)
+				s.Write([]byte("Cannot get response"))
+				return
+			}
+
+			m.Broadcast(responseData)
+		}
 	})
 
-	fmt.Println("Server running on port 5000")
-	if err := http.ListenAndServe(":5000", nil); err != nil {
-		fmt.Println("Error running server", err)
+	fmt.Printf("Server running on port %s\r\n", PORT)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", PORT), nil); err != nil {
+		fmt.Println("Error running server", err, PORT)
 		panic("Cannot run server")
 	}
 }

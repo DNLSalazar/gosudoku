@@ -6,7 +6,6 @@ import (
 	"sudoku/menu"
 	"sudoku/server"
 	"sudoku/sudoku"
-	"time"
 )
 
 func runGame() {
@@ -36,11 +35,9 @@ func main() {
 	switch result {
 	case menu.ServeGame:
 		fmt.Println("Starting server game")
-		time.Sleep(time.Second * 5)
 		server.Server()
 	case menu.PlayOnTerminal:
 		fmt.Println("Playing on terminal...")
-		time.Sleep(time.Second * 5)
 		runGame()
 	}
 }

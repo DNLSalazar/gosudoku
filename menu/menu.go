@@ -2,7 +2,7 @@ package menu
 
 import (
 	"fmt"
-	"math"
+	"sudoku/server"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -86,7 +86,16 @@ func (a App) handleSelectPage(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a App) updateSelected(n int) {
-	*a.selectedIndex = int(math.Abs(float64((*a.selectedIndex + n) % len(items))))
+	newValue := *a.selectedIndex + n
+	if newValue < 0 {
+		*a.selectedIndex = len(items) - 1
+		return
+	}
+	if newValue >= len(items) {
+		*a.selectedIndex = 0
+		return
+	}
+	*a.selectedIndex = newValue
 }
 
 func (a App) toggleHelp() (tea.Model, tea.Cmd) {
@@ -103,6 +112,8 @@ func (a App) View() string {
 
 func (a App) buildMainPage() string {
 	var s string
+	s += "Press Ctrl+H to toggle Help\r\n"
+	s += "Use Up/k and Down/j to move across the options, press enter to confirm you selection\r\n\r\n"
 	s += "Please select an option\r\n"
 
 	for i, v := range items {
@@ -121,5 +132,13 @@ func (a App) buildMainPage() string {
 }
 
 func (a App) buildHelpPage() string {
-	return "Help page"
+	str := "Press Ctrl+H to toggle Help\r\n"
+
+	str += "------------ Serve Game ------------\r\n\r\n"
+	str += fmt.Sprintf("Serve a sudoku game on port %s available to play in any browser\r\n", server.PORT)
+	str += "with multiplayer support\r\n\r\n"
+
+	str += "------------ Terminal Game ------------\r\n\r\n"
+	str += "Play a game on the terminal by yourself, no multiplayer"
+	return str
 }

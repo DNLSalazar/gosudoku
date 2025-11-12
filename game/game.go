@@ -379,6 +379,9 @@ func (s *SudokuGame) buildView() {
 				} else {
 					color = inStTextGreen
 				}
+				if cell.Static {
+					color = inputStyle
+				}
 			}
 
 			if j == 0 {
