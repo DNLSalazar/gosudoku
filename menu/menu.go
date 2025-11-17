@@ -20,15 +20,17 @@ var items = []string{
 type App struct {
 	selectedIndex *int
 	helpPage      bool
+	quit          *bool
 }
 
 func (a App) Init() tea.Cmd {
 	return nil
 }
 
-func NewMenuApp(selection *int) *tea.Program {
+func NewMenuApp(selection *int, quit *bool) *tea.Program {
 	app := App{
 		selectedIndex: selection,
+		quit:          quit,
 	}
 	return tea.NewProgram(app)
 }
@@ -46,6 +48,8 @@ func (a App) handleHelpPage(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlH:
 			return a.toggleHelp()
+		case tea.KeyCtrlC:
+			return a.toggleHelp()
 		}
 		switch msg.String() {
 		case "q", "Q":
@@ -53,6 +57,10 @@ func (a App) handleHelpPage(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return a, nil
+}
+
+func (a App) setQuit(v bool) {
+	*a.quit = v
 }
 
 func (a App) handleSelectPage(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -69,11 +77,13 @@ func (a App) handleSelectPage(msg tea.Msg) (tea.Model, tea.Cmd) {
 			tea.Quit()
 			return a, tea.Quit
 		case tea.KeyCtrlC:
+			a.setQuit(true)
 			tea.Quit()
 			return a, tea.Quit
 		}
 		switch msg.String() {
 		case "q", "Q":
+			a.setQuit(true)
 			tea.Quit()
 			return a, tea.Quit
 		case "j":
@@ -132,7 +142,8 @@ func (a App) buildMainPage() string {
 }
 
 func (a App) buildHelpPage() string {
-	str := "Press Ctrl+H to toggle Help\r\n"
+	str := "Press Ctrl+H to toggle Help\r\n\r\n"
+	str += "Press Q/Ctrl+C to exit\r\n\r\n"
 
 	str += "------------ Serve Game ------------\r\n\r\n"
 	str += fmt.Sprintf("Serve a sudoku game on port %s available to play in any browser\r\n", server.PORT)
@@ -140,5 +151,6 @@ func (a App) buildHelpPage() string {
 
 	str += "------------ Terminal Game ------------\r\n\r\n"
 	str += "Play a game on the terminal by yourself, no multiplayer"
+
 	return str
 }

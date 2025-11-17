@@ -17,21 +17,27 @@ func runGame() {
 	}
 }
 
-func startMenuApp() int {
+func startMenuApp() (int, bool) {
 	fmt.Print("\033[H\033[2J")
 
 	var selection int
-	a := menu.NewMenuApp(&selection)
+	var quit bool
+	a := menu.NewMenuApp(&selection, &quit)
 	if _, err := a.Run(); err != nil {
 		fmt.Println("Error running menu", err)
 		panic("Error running menu")
 	}
 
-	return selection
+	return selection, quit
 }
 
 func main() {
-	result := startMenuApp()
+	result, quit := startMenuApp()
+
+	if quit {
+		return
+	}
+
 	switch result {
 	case menu.ServeGame:
 		fmt.Println("Starting server game")
