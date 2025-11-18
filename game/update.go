@@ -3,8 +3,8 @@ package game
 import (
 	"fmt"
 	"strconv"
-	"sudoku/sudoku"
 
+	"github.com/DNLSalazar/gosudoku/sudoku"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

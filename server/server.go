@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sudoku/sudoku"
 	"time"
 
+	"github.com/DNLSalazar/gosudoku/sudoku"
 	"github.com/olahol/melody"
 )
 
-const PORT = "5000"
+const PORT = "1289"
 
 func Server() {
 	m := melody.New()

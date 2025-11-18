@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"sudoku/sudoku"
+
+	"github.com/DNLSalazar/gosudoku/sudoku"
 )
 
 func readBoardsFromFile() [][][]sudoku.Cell {

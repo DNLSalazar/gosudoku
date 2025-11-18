@@ -3,7 +3,8 @@ package server
 import (
 	"errors"
 	"fmt"
-	"sudoku/sudoku"
+
+	"github.com/DNLSalazar/gosudoku/sudoku"
 )
 
 type MessageFromPlayer struct {

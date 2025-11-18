@@ -2,8 +2,8 @@ package game
 
 import (
 	"strconv"
-	"sudoku/sudoku"
 
+	"github.com/DNLSalazar/gosudoku/sudoku"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )

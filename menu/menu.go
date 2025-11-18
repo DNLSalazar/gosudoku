@@ -2,8 +2,8 @@ package menu
 
 import (
 	"fmt"
-	"sudoku/server"
 
+	"github.com/DNLSalazar/gosudoku/server"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

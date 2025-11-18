@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"slices"
-	"sudoku/sudoku"
+
+	"github.com/DNLSalazar/gosudoku/sudoku"
 )
 
 type Solvingcell struct {

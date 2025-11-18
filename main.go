@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"sudoku/game"
-	"sudoku/menu"
-	"sudoku/server"
-	"sudoku/sudoku"
+
+	"github.com/DNLSalazar/gosudoku/game"
+	"github.com/DNLSalazar/gosudoku/menu"
+	"github.com/DNLSalazar/gosudoku/server"
+	"github.com/DNLSalazar/gosudoku/sudoku"
 )
 
 func runGame() {
