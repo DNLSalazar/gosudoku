@@ -20,7 +20,7 @@ Play the game via terminal by yourself, it supports two input methods, movements
 
 ## Installation
 
-With go installed, run `go install`.
+With go installed, run `go install github.com/DNLSalazar/gosudoku@latest`.
 
 ## Usage
 
