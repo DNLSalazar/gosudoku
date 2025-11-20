@@ -41,6 +41,7 @@ func main() {
 
 	switch result {
 	case menu.ServeGame:
+		fmt.Print("\033[H\033[2J")
 		fmt.Println("Starting server game")
 		server.Server()
 	case menu.PlayOnTerminal:
