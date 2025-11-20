@@ -10,13 +10,13 @@ The game has two main components, both accessible from the main menu when you ru
 
 Creates a game server on the desplayed port to play via browser with up to 3 other players.
 
-IMG/GIF
+![Game Server](https://github.com/DNLSalazar/gosudoku/raw/resources/server.gif)
 
 ### Terminal game
 
 Play the game via terminal by yourself, it supports two input methods, movements (using arrows, hjkl and wasd) and input mode. It includes help page with instructions.
 
-IMG/GIF
+![TUI Game](https://github.com/DNLSalazar/gosudoku/raw/resources/tui.gif)
 
 ## Installation
 
