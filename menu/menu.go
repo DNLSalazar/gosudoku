@@ -10,11 +10,13 @@ import (
 const (
 	ServeGame = iota
 	PlayOnTerminal
+	Solver
 )
 
 var items = []string{
 	"Serve game and play on any browser.",
 	"Play on Terminal, as fun as it sounds.",
+	"Let the backtracking solver do its magic",
 }
 
 type App struct {
@@ -150,7 +152,10 @@ func (a App) buildHelpPage() string {
 	str += "with multiplayer support\r\n\r\n"
 
 	str += "------------ Terminal Game ------------\r\n\r\n"
-	str += "Play a game on the terminal by yourself, no multiplayer"
+	str += "Play a game on the terminal by yourself, no multiplayer\r\n\r\n"
+
+	str += "------------ Solver ------------\r\n\r\n"
+	str += "See the backtracker solver brute force the board"
 
 	return str
 }

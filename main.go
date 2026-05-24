@@ -47,5 +47,8 @@ func main() {
 	case menu.PlayOnTerminal:
 		fmt.Println("Playing on terminal...")
 		runGame()
+	case menu.Solver:
+		game := sudoku.CreateNewSudoku(10)
+		backtrackSolver(&game)
 	}
 }

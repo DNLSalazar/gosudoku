@@ -171,3 +171,64 @@ func Solve(s *sudoku.Sudoku) {
 	s.PrintBoard()
 	fmt.Println(s.IsValidBoard())
 }
+
+func backtrackSolver(s *sudoku.Sudoku) {
+	var dfs func(x, y int) bool
+	iter := 0
+
+	dfs = func(x, y int) bool {
+		iter++
+		if x == 9 {
+			if s.IsValidBoard() {
+				return true
+			}
+			return false
+		}
+
+		c := s.GetCell(sudoku.Coor{
+			X: x,
+			Y: y,
+		})
+
+		var nx, ny int
+
+		if y == 8 {
+			nx = x + 1
+			ny = 0
+		} else {
+			ny = y + 1
+			nx = x
+		}
+
+		if c.Static {
+			return dfs(nx, ny)
+		} else {
+			for i := 1; i <= 9; i++ {
+				s.ValidateNewCell(c.Coor, i)
+				fmt.Print("\033[H\033[2J")
+
+				s.PrintBoard()
+				// time.Sleep(time.Duration(time.Millisecond * 10))
+				if !c.HasErr {
+					res := dfs(nx, ny)
+					if res {
+						return true
+					}
+				}
+				s.ValidateNewCell(c.Coor, 0)
+			}
+		}
+		return false
+	}
+
+	dfs(0, 0)
+
+	solved := s.IsValidBoard()
+	var result string = "Unsolved"
+
+	if solved {
+		result = "Solved"
+	}
+
+	fmt.Printf("\r\n\r\nThe board is %s. The number of excecutions for backtracking %d\r\n\r\n", result, iter)
+}

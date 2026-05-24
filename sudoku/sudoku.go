@@ -67,6 +67,7 @@ func (s *Sudoku) PrintStateOfBoard() {
 }
 
 func (s *Sudoku) ValidateCells() {
+	s.HasErr = false
 	for i := range 9 {
 		for k := range 9 {
 			s.board[i][k].HasErr = false
