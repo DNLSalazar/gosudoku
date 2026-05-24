@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/DNLSalazar/gosudoku/sudoku"
 )
@@ -172,9 +173,33 @@ func Solve(s *sudoku.Sudoku) {
 	fmt.Println(s.IsValidBoard())
 }
 
+func gamePrinter() (*chan bool, *chan sudoku.Sudoku) {
+	t := time.NewTicker(time.Duration(time.Millisecond * 25))
+	s := make(chan bool)
+	gameChan := make(chan sudoku.Sudoku)
+	go func() {
+		var game sudoku.Sudoku
+		for {
+			select {
+			case <-t.C:
+				fmt.Print("\033[H\033[2J")
+				game.PrintBoard()
+			case <-s:
+				t.Stop()
+			case s := <-gameChan:
+				game = s
+			}
+		}
+	}()
+
+	return &s, &gameChan
+}
+
 func backtrackSolver(s *sudoku.Sudoku) {
 	var dfs func(x, y int) bool
 	iter := 0
+
+	stop, gameChan := gamePrinter()
 
 	dfs = func(x, y int) bool {
 		iter++
@@ -205,10 +230,8 @@ func backtrackSolver(s *sudoku.Sudoku) {
 		} else {
 			for i := 1; i <= 9; i++ {
 				s.ValidateNewCell(c.Coor, i)
-				fmt.Print("\033[H\033[2J")
 
-				s.PrintBoard()
-				// time.Sleep(time.Duration(time.Millisecond * 10))
+				*gameChan <- *s
 				if !c.HasErr {
 					res := dfs(nx, ny)
 					if res {
@@ -222,6 +245,7 @@ func backtrackSolver(s *sudoku.Sudoku) {
 	}
 
 	dfs(0, 0)
+	*stop <- true
 
 	solved := s.IsValidBoard()
 	var result string = "Unsolved"
@@ -230,5 +254,7 @@ func backtrackSolver(s *sudoku.Sudoku) {
 		result = "Solved"
 	}
 
+	fmt.Print("\033[H\033[2J")
+	s.PrintBoard()
 	fmt.Printf("\r\n\r\nThe board is %s. The number of excecutions for backtracking %d\r\n\r\n", result, iter)
 }
