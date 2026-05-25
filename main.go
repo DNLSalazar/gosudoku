@@ -3,15 +3,16 @@ package main
 import (
 	"fmt"
 
+	flagargs "github.com/DNLSalazar/gosudoku/flagArgs"
 	"github.com/DNLSalazar/gosudoku/game"
 	"github.com/DNLSalazar/gosudoku/menu"
 	"github.com/DNLSalazar/gosudoku/server"
 	"github.com/DNLSalazar/gosudoku/sudoku"
 )
 
-func runGame() {
+func runGame(initialCells int) {
 	fmt.Print("\033[H\033[2J")
-	s := sudoku.CreateNewSudoku(17)
+	s := sudoku.CreateNewSudoku(initialCells)
 	game := game.NewSudokuGame(&s)
 	if _, err := game.Run(); err != nil {
 		panic("Error running app")
@@ -33,22 +34,29 @@ func startMenuApp() (int, bool) {
 }
 
 func main() {
-	result, quit := startMenuApp()
+	args := flagargs.GetArgs()
+	var result int
+	if args.Mode != 0 {
+		result = args.Mode
+	} else {
+		resultApp, quit := startMenuApp()
+		result = resultApp
 
-	if quit {
-		return
+		if quit {
+			return
+		}
 	}
 
 	switch result {
 	case menu.ServeGame:
 		fmt.Print("\033[H\033[2J")
 		fmt.Println("Starting server game")
-		server.Server()
+		server.Server(args.InitialCells)
 	case menu.PlayOnTerminal:
 		fmt.Println("Playing on terminal...")
-		runGame()
+		runGame(args.InitialCells)
 	case menu.Solver:
-		game := sudoku.CreateNewSudoku(10)
-		backtrackSolver(&game)
+		game := sudoku.CreateNewSudoku(args.InitialCells)
+		backtrackSolver(&game, args.Speed)
 	}
 }

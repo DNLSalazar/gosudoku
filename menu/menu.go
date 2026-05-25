@@ -155,7 +155,7 @@ func (a App) buildHelpPage() string {
 	str += "Play a game on the terminal by yourself, no multiplayer\r\n\r\n"
 
 	str += "------------ Solver ------------\r\n\r\n"
-	str += "See the backtracker solver brute force the board"
+	str += "See the backtracker solver brute force the board. If you want to change\r\nthe speed, use the -s flag"
 
 	return str
 }

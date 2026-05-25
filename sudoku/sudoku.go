@@ -10,8 +10,8 @@ import (
 	"github.com/fatih/color"
 )
 
-var colorYellow = color.New(color.FgYellow)
-var colorRed = color.New(color.FgRed)
+var colorBlue = color.New(color.FgBlue)
+var colorGreen = color.New(color.FgCyan)
 
 type Coor struct {
 	X int `json:"x"`
@@ -192,9 +192,9 @@ func (s *Sudoku) PrintBoard() {
 
 			var color *color.Color
 			if colorNumRow == colorNumCol {
-				color = colorYellow
+				color = colorBlue
 			} else {
-				color = colorRed
+				color = colorGreen
 			}
 
 			if j == 0 {

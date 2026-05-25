@@ -12,9 +12,9 @@ import (
 
 const PORT = "1289"
 
-func Server() {
+func Server(initialCells int) {
 	m := melody.New()
-	game := sudoku.CreateNewSudoku(17)
+	game := sudoku.CreateNewSudoku(initialCells)
 	gs := GameSession{
 		InitialBoard: game.GetBoard(),
 		MaxPlayers:   4,

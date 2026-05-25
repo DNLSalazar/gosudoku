@@ -195,7 +195,21 @@ func gamePrinter() (*chan bool, *chan sudoku.Sudoku) {
 	return &s, &gameChan
 }
 
-func backtrackSolver(s *sudoku.Sudoku) {
+func backtrackSolver(s *sudoku.Sudoku, speed int) {
+	if speed < 1 {
+		speed = 1
+	}
+
+	var timeSleep int64
+
+	switch speed {
+	default:
+		timeSleep = 0
+	case 1:
+		timeSleep = 30
+	case 2:
+		timeSleep = 15
+	}
 	var dfs func(x, y int) bool
 	iter := 0
 
@@ -232,6 +246,9 @@ func backtrackSolver(s *sudoku.Sudoku) {
 				s.ValidateNewCell(c.Coor, i)
 
 				*gameChan <- *s
+				if timeSleep != 0 {
+					time.Sleep(time.Duration(time.Millisecond * time.Duration(timeSleep)))
+				}
 				if !c.HasErr {
 					res := dfs(nx, ny)
 					if res {
