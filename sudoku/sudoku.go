@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand/v2"
 	"slices"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -186,7 +187,8 @@ func (s *Sudoku) PrintBoard() {
 	fmt.Printf("     ------------------------------------- \r\n")
 	for i := range 9 {
 		colorNumRow := (int(math.Floor(float64(i)/3))%3)%2 == 0
-		str := fmt.Sprintf("  %d  ", i+1)
+		var str strings.Builder
+		fmt.Fprintf(&str, "  %d  ", i+1)
 		for j := range 9 {
 			colorNumCol := (int(math.Floor(float64(j)/3))%3)%2 == 0
 
@@ -198,7 +200,7 @@ func (s *Sudoku) PrintBoard() {
 			}
 
 			if j == 0 {
-				str += color.Sprintf("|")
+				str.WriteString(color.Sprintf("|"))
 			}
 			cell := s.board[i][j]
 			var value string
@@ -207,9 +209,9 @@ func (s *Sudoku) PrintBoard() {
 			} else {
 				value = fmt.Sprint(cell.Value)
 			}
-			str += color.Sprintf(" %s |", value)
+			str.WriteString(color.Sprintf(" %s |", value))
 		}
-		fmt.Printf("%s   %d\r\n", str, i+1)
+		fmt.Printf("%s   %d\r\n", str.String(), i+1)
 		fmt.Printf("     ------------------------------------- \r\n")
 	}
 	fmt.Printf("\r\n     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | \r\n")
