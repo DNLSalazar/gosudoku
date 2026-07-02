@@ -26,7 +26,7 @@ func GetArgs() Args {
 	var mode, speed, cells int
 
 	flag.IntVar(&mode, "m", 0, MODE_DESCRIPTION)
-	flag.IntVar(&speed, "s", 1, SPEED_DESCRIPTION)
+	flag.IntVar(&speed, "s", 2, SPEED_DESCRIPTION)
 	flag.IntVar(&cells, "c", 17, CELLS_DESCRIPTION)
 	flag.Parse()
 

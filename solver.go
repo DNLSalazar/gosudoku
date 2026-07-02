@@ -107,5 +107,5 @@ func backtrackSolver(s *sudoku.Sudoku, speed int) {
 
 	fmt.Print("\033[H\033[2J")
 	s.PrintBoard()
-	fmt.Printf("\r\n\r\nThe board is %s. The number of excecutions for backtracking %d\r\n\r\n", result, iter)
+	fmt.Printf("\r\n\r\nThe board is %s. Number of excecutions for backtracking: %d\r\n\r\n", result, iter)
 }
